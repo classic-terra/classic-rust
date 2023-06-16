@@ -1,0 +1,12 @@
+[submodule "cosmos-sdk"]
+	path = cosmos-sdk
+	url = https://github.com/classic-terra/cosmos-sdk
+[submodule "wasmd"]
+	path = wasmd
+	url = https://github.com/classic-terra/wasmd.git
+[submodule "ibc-go"]
+	path = ibc-go
+	url = https://github.com/cosmos/ibc-go
+[submodule "classic"]
+	path = classic
+	url = https://github.com/classic-terra/core

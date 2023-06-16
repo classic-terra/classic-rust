@@ -1,0 +1,15 @@
+[package]
+name = "classic-rust"
+version = "0.1.0"
+authors = ["nghuyenthevinh2000 <nghuyenthevinh@gmail.com>"]
+edition = "2018"
+description = "Protobuf struct defintions for interacting with Terra Classic"
+readme = "README.md"
+
+[dependencies]
+prost = "0.11"
+prost-build = "0.11"
+tonic = "0.9"
+tonic-build = "0.9"
+regex = "1"
+walkdir = "2"
