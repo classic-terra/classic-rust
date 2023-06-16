@@ -26,7 +26,7 @@ const CLASSIC_REV: &str = "v2.1.1";
 const COSMOS_SDK_REV: &str = "v0.45.14-classic";
 
 /// The Cosmos ibc-go commit or tag to be cloned and used to build the proto files
-const IBC_REV: &str = "v4.3.1";
+const IBC_REV: &str = "v3.0.0";
 
 /// The wasmd commit or tag to be cloned and used to build the proto files
 const WASMD_REV: &str = "v0.30.0-terra.2";
@@ -35,7 +35,7 @@ const WASMD_REV: &str = "v0.30.0-terra.2";
 // working directory.
 
 /// The directory generated cosmos-sdk proto files go into in this repo
-const CLASSIC_PROTO_DIR: &str = "lib/";
+const CLASSIC_PROTO_DIR: &str = "lib/src/";
 /// Directory where the classic submodule is located
 const CLASSIC_DIR: &str = "classic";
 /// Directory where the cosmos-sdk submodule is located
@@ -89,6 +89,7 @@ fn main() {
     fs::create_dir_all(&temp_classic_dir).unwrap();
 
     update_submodules();
+    change_sdk_mod(&COSMOS_SDK_DIR);
     output_sdk_version(&temp_sdk_dir);
     output_ibc_version(&temp_ibc_dir);
     output_wasmd_version(&temp_wasmd_dir);
@@ -186,6 +187,12 @@ fn run_rustfmt(dir: &Path) {
     run_cmd("rustfmt", args);
 }
 
+fn change_sdk_mod(cosmos_sdk_dir: &str) {
+    let source_path = format!("{}/third_party/proto/confio/proofs.proto", cosmos_sdk_dir);
+    let target_path = format!("{}/third_party/proto/proofs.proto", cosmos_sdk_dir);
+    let _ = fs::rename(source_path, target_path);
+}
+
 fn update_submodules() {
     info!("Updating classic-terra/core submodule...");
     run_git(["submodule", "update", "--init"]);
@@ -229,59 +236,39 @@ fn output_classic_version(out_dir: &Path) {
 }
 
 fn compile_classic_proto_and_services(out_dir: &Path) {
-    println!(
-        "Compiling cosmos-sdk .proto files to Rust into '{}'...",
-        TMP_BUILD_DIR
-    );
-
-    let proto_directories = vec![
-        "classic/proto",
-        "cosmos-sdk/proto",
-        "cosmos-sdk/third_party/proto",
-        "wasmd/proto",
-    ];
+    let sdk_dir = Path::new(CLASSIC_DIR);
+    let proto_path = sdk_dir.join("proto");
+    let proto_paths = [format!("{}/proto/terra", sdk_dir.display())];
 
     // List available proto files
-    let mut protos: Vec<String> = Vec::new();
-
-    for proto_path in proto_directories.iter() {
-        let proto_dir = Path::new(proto_path);
-        let protos_paths = list_files_in_dir(&proto_dir);
-        protos.extend(protos_paths);
-    }
+    let mut protos: Vec<PathBuf> = vec![];
+    collect_protos(&proto_paths, &mut protos);
 
     // Compile all proto client for GRPC services
-    info!("Compiling wasmd proto clients for GRPC services!");
-    tonic_build::configure()
-        .build_client(true)
-        .build_server(true)
-        .out_dir(out_dir)
-        .extern_path(".tendermint", "::tendermint_proto")
-        .compile(&protos, &proto_directories)
-        .unwrap();
+    info!("Compiling classic proto clients for GRPC services!");
+    run_buf("buf.gen.yaml", proto_path, out_dir);
     info!("=> Done!");
 }
 
-fn list_files_in_dir(dir_path: &Path) -> Vec<String> {
-    let mut protos_path: Vec<String> = Vec::new();
-
-    if let Ok(entries) = fs::read_dir(dir_path) {
-        for entry in entries {
-            if let Ok(entry) = entry {
-                let path = entry.path();
-                if path.is_dir() {
-                    let list_files = list_files_in_dir(&path);
-                    protos_path.extend(list_files);
-                } else {
-                    if path.extension() == Some(OsStr::new("proto")) {
-                        protos_path.push(path.to_str().unwrap().to_string());
-                    }
-                }
-            }
-        }
+/// collect_protos walks every path in `proto_paths` and recursively locates all .proto
+/// files in each path's subdirectories, adding the full path of each file to `protos`
+///
+/// Any errors encountered will cause failure for the path provided to WalkDir::new()
+fn collect_protos(proto_paths: &[String], protos: &mut Vec<PathBuf>) {
+    for proto_path in proto_paths {
+        protos.append(
+            &mut WalkDir::new(proto_path)
+                .into_iter()
+                .filter_map(|e| e.ok())
+                .filter(|e| {
+                    e.file_type().is_file()
+                        && e.path().extension().is_some()
+                        && e.path().extension().unwrap() == "proto"
+                })
+                .map(|e| e.into_path())
+                .collect(),
+        );
     }
-
-    protos_path
 }
 
 fn copy_generated_files(from_dir: &Path, to_dir: &Path) {
@@ -317,6 +304,7 @@ fn copy_generated_files(from_dir: &Path, to_dir: &Path) {
 
 fn copy_and_patch(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> io::Result<()> {
     /// Regex substitutions to apply to the prost-generated output
+    /// issue: https://github.com/cosmos/cosmos-rust/issues/15
     const REPLACEMENTS: &[(&str, &str)] = &[
         // Use `tendermint-proto` proto definitions
         ("(super::)+tendermint", "tendermint_proto"),
@@ -341,6 +329,8 @@ fn copy_and_patch(src: impl AsRef<Path>, dest: impl AsRef<Path>) -> io::Result<(
              #[cfg(feature = \"grpc\")]\n\
              #[cfg_attr(docsrs, doc(cfg(feature = \"grpc\")))]",
         ),
+        // Fix super::super in classic proto definitions cosmos_sdk_proto::cosmos
+        ("(super::)+cosmos", "cosmos_sdk_proto::cosmos"),
     ];
 
     // Skip proto files belonging to `EXCLUDED_PROTO_PACKAGES`
