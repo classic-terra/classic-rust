@@ -57,7 +57,6 @@ func InitTestEnv() uint64 {
 	sdkConfig.SetBech32PrefixForValidator(coretypes.Bech32PrefixValAddr, coretypes.Bech32PrefixValPub)
 	sdkConfig.SetBech32PrefixForConsensusNode(coretypes.Bech32PrefixConsAddr, coretypes.Bech32PrefixConsPub)
 	sdkConfig.SetAddressVerifier(wasmtypes.VerifyAddressLen())
-	sdkConfig.Seal()
 
 	env := new(testenv.TestEnv)
 	env.App = testenv.SetupTerraApp()

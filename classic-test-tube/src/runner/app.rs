@@ -141,14 +141,13 @@ impl<'a> Runner<'a> for TerraTestApp {
 #[cfg(test)]
 mod tests {
     use classic_proto::traits::TypeUrl;
+    use cosmrs::bip32::secp256k1::pkcs8::der::Encode;
     use cosmrs::proto::cosmos::bank::v1beta1::QueryAllBalancesResponse;
-    use prost::Message;
-    use std::mem::swap;
+    use prost::{Message};
     use std::option::Option::None;
 
     use cosmrs::proto::cosmos::bank::v1beta1::QueryAllBalancesRequest;
-    use cosmrs::Any;
-    use cosmwasm_std::{attr, coins, Coin};
+    use cosmwasm_std::{coins, Coin};
 
     use crate::module::Wasm;
     use crate::runner::app::TerraTestApp;
@@ -156,7 +155,7 @@ mod tests {
     use test_tube::account::{Account, FeeSetting};
     use test_tube::module::Module;
     use test_tube::ExecuteResponse;
-    use test_tube::{runner::*, RunnerError};
+    use test_tube::{runner::*};
 
     #[test]
     fn test_init_accounts() {
@@ -200,10 +199,14 @@ mod tests {
 
     #[test]
     fn test_execute_swap() {
-        use classic_proto::classic::market::{MsgSwap, MsgSwapResponse};
+        use classic_proto::classic::market::MsgSwap;
         use cosmrs::proto::cosmos::base::v1beta1::Coin;
+        use crate::module::Bank;
+        use crate::module::Market;
 
         let app = TerraTestApp::default();
+        let bank = Bank::new(&app);
+        let market = Market::new(&app);
 
         let acc = app
             .init_account(&coins(100_000_000_000_000, "uluna"))
@@ -216,8 +219,7 @@ mod tests {
             offer_coin: Option::Some(Coin{amount: String::from("1000000"), denom: String::from("uluna")})
         };
 
-        let res: ExecuteResponse<MsgSwapResponse> =
-            app.execute(msg, MsgSwap::TYPE_URL, &acc).unwrap();
+        let res = market.swap(msg, &acc).unwrap();
 
         let swap_coin = &res
             .data
@@ -247,7 +249,7 @@ mod tests {
         };
 
         // check that the account has updated swap coin amount
-        let res: QueryAllBalancesResponse = app.query("/cosmos.bank.v1beta1.Query/AllBalances", query).unwrap();
+        let res = bank.query_all_balances(query).unwrap();
         res.balances.iter().filter(|coin| coin.denom == "uusd").for_each(|coin| {
             assert_eq!(coin.amount, swap_coin.amount);
         });
@@ -259,8 +261,7 @@ mod tests {
             offer_coin: Option::Some(Coin{amount: String::from("1000000"), denom: String::from("uluna")})
         };
 
-        let res: ExecuteResponse<MsgSwapResponse> =
-            app.execute(msg, MsgSwap::TYPE_URL, &acc).unwrap();
+        let res = market.swap(msg, &acc).unwrap();
         
         let additional_swap_coin = &res
             .data
@@ -270,7 +271,7 @@ mod tests {
         let accumlated_uusd = swap_amount + additional_swap_coin.amount.parse::<u64>().unwrap();
         
         // check that the account has updated swap coin amount
-        let res: QueryAllBalancesResponse = app.query("/cosmos.bank.v1beta1.Query/AllBalances", query).unwrap();
+        let res = bank.query_all_balances(query).unwrap();
         res.balances.iter().filter(|coin| coin.denom == "uusd").for_each(|coin| {
             assert_eq!(coin.amount.parse::<u64>().unwrap(), accumlated_uusd);
         });
@@ -278,13 +279,33 @@ mod tests {
     }
 
     #[test]
-    fn test_query() {
+    fn test_query_print_all_module_addresses() {
+        use cosmrs::proto::cosmos::auth::v1beta1::{QueryAccountsRequest, QueryAccountsResponse, ModuleAccount};
+
         let app = TerraTestApp::default();
-    }
 
-    #[test]
-    fn test_multiple_as_module() {
+        let query = &QueryAccountsRequest {
+            pagination: None,
+        };
 
+        let modules: Vec<ModuleAccount> = app
+            .query::<QueryAccountsRequest, QueryAccountsResponse>("/cosmos.auth.v1beta1.Query/Accounts", query)
+            .unwrap()
+            .accounts
+            .into_iter()
+            .map(|account| {
+                let value_slice = account.value.as_slice();
+                ModuleAccount::decode::<&[u8]>(value_slice)
+            })
+            .filter_map(Result::ok)
+            .collect();
+        
+        modules.iter()
+            .for_each(|module| {
+                println!("name: {}, address: {}", module.clone().name, module.clone().base_account.unwrap().address)
+            });
+        
+        assert_eq!(modules.len(), 10);
     }
 
     #[test]
@@ -295,8 +316,8 @@ mod tests {
         let accs = app
             .init_accounts(
                 &[
-                    Coin::new(1_000_000_000_000, "uatom"),
-                    Coin::new(1_000_000_000_000, "uosmo"),
+                    Coin::new(1_000_000_000_000, "uluna"),
+                    Coin::new(1_000_000_000_000, "uusd"),
                 ],
                 2,
             )
@@ -360,10 +381,10 @@ mod tests {
     fn test_custom_fee() {
         let app = TerraTestApp::default();
         let initial_balance = 1_000_000_000_000;
-        let alice = app.init_account(&coins(initial_balance, "uosmo")).unwrap();
-        let bob = app.init_account(&coins(initial_balance, "uosmo")).unwrap();
+        let alice = app.init_account(&coins(initial_balance, "uluna")).unwrap();
+        let bob = app.init_account(&coins(initial_balance, "uluna")).unwrap();
 
-        let amount = Coin::new(1_000_000, "uosmo");
+        let amount = Coin::new(1_000_000, "uluna");
         let gas_limit = 100_000_000;
 
         // use FeeSetting::Auto by default, so should not equal newly custom fee setting
@@ -388,7 +409,7 @@ mod tests {
             .unwrap()
             .balances
             .into_iter()
-            .find(|c| c.denom == "uosmo")
+            .find(|c| c.denom == "uluna")
             .unwrap()
             .amount
             .parse::<u128>()
@@ -400,10 +421,37 @@ mod tests {
 
     #[test]
     fn test_param_set() {
+        use cosmrs::Any;
+        use classic_proto::classic::treasury::*;
 
-    }
+        let app = TerraTestApp::new();
 
-    #[test]
-    fn test_set_param_set() {
+        let treasury_params = app.get_param_set::<Params>(classic_proto::TREASURY_MODULE, Params::TYPE_URL).unwrap();
+
+        // sdk.Dec is being handled weirdly, this is due to sdk.Dec being handled by amino in sdk instead of proto in rust.
+        // 0000000000000000000 (19 zeros) () (0.000000000000000000 in sdk.Dec)
+        // 1000000000000000000 (1.0 in sdk.Dec)
+        // 2357 (0.000000000000002357 in sdk.Dec)
+        let in_pset = Params {
+            tax_policy: treasury_params.tax_policy,
+            reward_policy : treasury_params.reward_policy,
+            seigniorage_burden_target: treasury_params.seigniorage_burden_target,
+            mining_increment: treasury_params.mining_increment,
+            window_short: treasury_params.window_short,
+            window_long: treasury_params.window_long,
+            window_probation: treasury_params.window_probation,
+            burn_tax_split: String::from("50000000000000000"), //0.05
+            min_initial_deposit_ratio: treasury_params.min_initial_deposit_ratio,
+        };
+        app.set_param_set(
+            classic_proto::TREASURY_MODULE,
+            Any {
+                type_url: Params::TYPE_URL.to_string(),
+                value: in_pset.encode_to_vec(),
+            },
+        ).unwrap();
+
+        let out_pset = app.get_param_set::<Params>(classic_proto::TREASURY_MODULE, Params::TYPE_URL).unwrap();
+        assert_eq!(out_pset.burn_tax_split, String::from("50000000000000000"));
     }
 }

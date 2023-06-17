@@ -51,14 +51,14 @@ mod tests {
     fn test_execute_cosmos_msgs() {
         let app = TerraTestApp::new();
         let signer = app
-            .init_account(&[Coin::new(1000000000000, "uosmo")])
+            .init_account(&[Coin::new(1000000000000, "uluna")])
             .unwrap();
 
         let bank = Bank::new(&app);
 
         // BankMsg::Send
         let to = app.init_account(&[]).unwrap();
-        let coin = Coin::new(100, "uosmo");
+        let coin = Coin::new(100, "uluna");
         let send_msg = CosmosMsg::Bank(BankMsg::Send {
             to_address: to.address(),
             amount: vec![coin],
@@ -68,12 +68,12 @@ mod tests {
         let balance = bank
             .query_balance(&QueryBalanceRequest {
                 address: to.address(),
-                denom: "uosmo".to_string(),
+                denom: "uluna".to_string(),
             })
             .unwrap()
             .balance;
         assert_eq!(balance.clone().unwrap().amount, "100".to_string());
-        assert_eq!(balance.unwrap().denom, "uosmo".to_string());
+        assert_eq!(balance.unwrap().denom, "uluna".to_string());
 
         // WasmMsg, first upload a contract
         let wasm = Wasm::new(&app);
