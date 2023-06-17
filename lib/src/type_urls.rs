@@ -45,3 +45,15 @@ impl TypeUrl for classic::oracle::MsgDelegateFeedConsent {
 impl TypeUrl for classic::oracle::MsgDelegateFeedConsentResponse {
     const TYPE_URL: &'static str = "/terra.oracle.v1beta1.MsgDelegateFeedConsentResponse";
 }
+
+impl TypeUrl for classic::market::Params {
+    const TYPE_URL: &'static str = "/terra.market.v1beta1.Params";
+}
+
+impl TypeUrl for classic::oracle::Params {
+    const TYPE_URL: &'static str = "/terra.oracle.v1beta1.Params";
+}
+
+impl TypeUrl for classic::treasury::Params {
+    const TYPE_URL: &'static str = "/terra.treasury.v1beta1.Params";
+}
