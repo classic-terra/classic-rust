@@ -19,6 +19,10 @@ pub use tendermint_proto as tendermint;
 /// The version (commit hash) of Terra Classic core used when generating this library.
 pub const CLASSIC_VERSION: &str = include_str!("classic/CLASSIC_COMMIT");
 
+pub const MARKET_MODULE: &str = "market";
+pub const ORACLE_MODULE: &str = "oracle";
+pub const TREASURY_MODULE: &str = "treasury";
+
 /// Alliance protobuf definitions.
 pub mod classic {
 

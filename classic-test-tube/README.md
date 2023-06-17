@@ -1,0 +1,1 @@
+`go tool cgo -exportheader artifacts/libclassictesttube.docrs.h main.go`

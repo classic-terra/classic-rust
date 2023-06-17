@@ -35,7 +35,7 @@ const WASMD_REV: &str = "v0.30.0-terra.2";
 // working directory.
 
 /// The directory generated cosmos-sdk proto files go into in this repo
-const CLASSIC_PROTO_DIR: &str = "lib/src/";
+const CLASSIC_PROTO_DIR: &str = "proto/src/";
 /// Directory where the classic submodule is located
 const CLASSIC_DIR: &str = "classic";
 /// Directory where the cosmos-sdk submodule is located
