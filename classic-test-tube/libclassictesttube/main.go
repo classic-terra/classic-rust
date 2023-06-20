@@ -67,7 +67,7 @@ func InitTestEnv() uint64 {
 	// Allow testing unoptimized contract
 	wasmtypes.MaxWasmSize = 1024 * 1024 * 1024 * 1024 * 1024
 
-	env.Ctx = env.App.BaseApp.NewContext(false, tmproto.Header{Height: 0, ChainID: "columbus-5", Time: time.Now().UTC()})
+	env.Ctx = env.App.BaseApp.NewContext(false, tmproto.Header{Height: coretypes.VersionMapEnableHeight - 1, ChainID: "columbus-5", Time: time.Now().UTC()})
 
 	env.BeginNewBlock(false, 5)
 

@@ -140,6 +140,7 @@ impl<'a> Runner<'a> for TerraTestApp {
 
 #[cfg(test)]
 mod tests {
+    use classic_proto::classic::treasury::QueryTaxCapRequest;
     use classic_proto::traits::TypeUrl;
     use cosmrs::bip32::secp256k1::pkcs8::der::Encode;
     use cosmrs::proto::cosmos::bank::v1beta1::QueryAllBalancesResponse;
@@ -151,7 +152,7 @@ mod tests {
 
     use crate::module::Wasm;
     use crate::runner::app::TerraTestApp;
-    use crate::Bank;
+    use crate::{Bank, Treasury};
     use test_tube::account::{Account, FeeSetting};
     use test_tube::module::Module;
     use test_tube::ExecuteResponse;
@@ -276,6 +277,18 @@ mod tests {
             assert_eq!(coin.amount.parse::<u64>().unwrap(), accumlated_uusd);
         });
         
+    }
+
+    #[test]
+    fn test_query_tax_cap() {
+        let app = TerraTestApp::default();
+        let treasury = Treasury::new(&app);
+
+        let tax_cap = treasury.query_tax_cap(&QueryTaxCapRequest{
+            denom: String::from("uluna")
+        }).unwrap();
+
+        assert_eq!(tax_cap.tax_cap, String::from("60000000000000000"));
     }
 
     #[test]

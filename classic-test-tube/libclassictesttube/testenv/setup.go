@@ -135,12 +135,13 @@ func SetupTerraApp() *app.TerraApp {
 		MaxGas:   -1,
 	}
 
-	// replace sdk.DefaultDenom with "uosmo", a bit of a hack, needs improvement
+	// replace sdk.DefaultDenom with "uluna", a bit of a hack, needs improvement
 	stateBytes = []byte(strings.Replace(string(stateBytes), "\"stake\"", "\"uluna\"", -1))
 
 	appInstance.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
+			InitialHeight:   coretypes.VersionMapEnableHeight,
 			ConsensusParams: concensusParams,
 			AppStateBytes:   stateBytes,
 		},
@@ -164,7 +165,7 @@ func (env *TestEnv) BeginNewBlock(executeNextEpoch bool, timeIncreaseSeconds uin
 		valAddr = valAddr2.Bytes()
 
 		env.ValPrivs = append(env.ValPrivs, valPriv)
-		err := simapp.FundAccount(env.App.BankKeeper, env.Ctx, valAddrFancy.Bytes(), sdk.NewCoins(sdk.NewInt64Coin("uosmo", 9223372036854775807)))
+		err := simapp.FundAccount(env.App.BankKeeper, env.Ctx, valAddrFancy.Bytes(), sdk.NewCoins(sdk.NewInt64Coin("uluna", 9223372036854775807)))
 		if err != nil {
 			panic(errors.Wrapf(err, "Failed to fund account"))
 		}
