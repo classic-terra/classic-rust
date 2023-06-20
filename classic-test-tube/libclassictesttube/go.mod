@@ -133,4 +133,5 @@ replace (
 	github.com/cosmos/cosmos-sdk => github.com/classic-terra/cosmos-sdk v0.45.14-classic
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/tendermint/tendermint => github.com/classic-terra/tendermint v0.34.24-terra.0
+	google.golang.org/grpc => google.golang.org/grpc v1.33.2
 )
