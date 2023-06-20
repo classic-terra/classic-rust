@@ -99,6 +99,32 @@ func SetupTerraApp() *app.TerraApp {
 	}
 	genesisState[oracletypes.ModuleName] = encCfg.Marshaler.MustMarshalJSON(&oracleGen)
 
+	// setup treasury genesis to have some tax cap
+	treasuryGen := treasurytypes.GenesisState{
+		Params:       treasurytypes.DefaultParams(),
+		TaxRate:      treasurytypes.DefaultTaxRate,
+		RewardWeight: treasurytypes.DefaultRewardWeight,
+		TaxCaps: []treasurytypes.TaxCap{
+			{
+				// this is mainnet value
+				Denom:  coretypes.MicroLunaDenom,
+				TaxCap: sdk.NewInt(60000000000000000),
+			},
+			{
+				Denom:  coretypes.MicroUSDDenom,
+				TaxCap: sdk.NewInt(79835432561680706),
+			},
+			{
+				Denom:  coretypes.MicroSDRDenom,
+				TaxCap: sdk.NewInt(1000000),
+			},
+		},
+		TaxProceeds:          sdk.Coins{},
+		EpochInitialIssuance: sdk.Coins{},
+		EpochStates:          []treasurytypes.EpochState{},
+	}
+	genesisState[treasurytypes.ModuleName] = encCfg.Marshaler.MustMarshalJSON(&treasuryGen)
+
 	stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 
 	requireNoErr(err)
