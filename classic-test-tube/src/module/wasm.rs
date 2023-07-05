@@ -2,7 +2,9 @@ use cosmrs::proto::cosmwasm::wasm::v1::{
     AccessConfig, MsgExecuteContract, MsgExecuteContractResponse, MsgInstantiateContract,
     MsgInstantiateContractResponse, MsgStoreCode, MsgStoreCodeResponse,
     QuerySmartContractStateRequest, QuerySmartContractStateResponse,
+    MsgMigrateContract, MsgMigrateContractResponse,
 };
+use cosmrs::proto::traits::TypeUrl;
 use cosmwasm_std::Coin;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -39,7 +41,7 @@ where
                 wasm_byte_code: wasm_byte_code.to_vec(),
                 instantiate_permission,
             },
-            "/cosmwasm.wasm.v1.MsgStoreCode",
+            MsgStoreCode::TYPE_URL,
             signer,
         )
     }
@@ -71,7 +73,7 @@ where
                     })
                     .collect(),
             },
-            "/cosmwasm.wasm.v1.MsgInstantiateContract",
+            MsgInstantiateContract::TYPE_URL,
             signer,
         )
     }
@@ -99,7 +101,29 @@ where
                     .collect(),
                 contract: contract.to_owned(),
             },
-            "/cosmwasm.wasm.v1.MsgExecuteContract",
+            MsgExecuteContract::TYPE_URL,
+            signer,
+        )
+    }
+
+    pub fn migrate<M>(
+        &self, 
+        contract: &str, 
+        msg: &M,
+        new_code_id: u64,
+        signer: &SigningAccount
+    ) -> RunnerExecuteResult<MsgMigrateContractResponse>
+    where
+        M: ?Sized + Serialize,
+    {
+        self.runner.execute(
+            MsgMigrateContract {
+                sender: signer.address(),
+                contract: contract.to_owned(),
+                code_id: new_code_id,
+                msg: serde_json::to_vec(msg).map_err(EncodeError::JsonEncodeError)?,
+            },
+            MsgMigrateContract::TYPE_URL,
             signer,
         )
     }
