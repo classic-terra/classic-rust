@@ -1,7 +1,7 @@
 [workspace]
 resolver = "2"
 members = [
-    "src",
+    "classic-rust-generator",
     "proto",
     "classic-test-tube"
 ]
