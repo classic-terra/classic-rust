@@ -140,11 +140,8 @@ impl<'a> Runner<'a> for TerraTestApp {
 
 #[cfg(test)]
 mod tests {
-    use classic_proto::classic::treasury::QueryTaxCapRequest;
-    use classic_proto::traits::TypeUrl;
-    use cosmrs::bip32::secp256k1::pkcs8::der::Encode;
-    use cosmrs::proto::cosmos::bank::v1beta1::QueryAllBalancesResponse;
-    use prost::{Message};
+    use classic_rust::types::terra::treasury::v1beta1::QueryTaxCapRequest;
+    use prost::Message;
     use std::option::Option::None;
 
     use cosmrs::proto::cosmos::bank::v1beta1::QueryAllBalancesRequest;
@@ -155,8 +152,7 @@ mod tests {
     use crate::{Bank, Treasury};
     use test_tube::account::{Account, FeeSetting};
     use test_tube::module::Module;
-    use test_tube::ExecuteResponse;
-    use test_tube::{runner::*};
+    use test_tube::runner::*;
 
     #[test]
     fn test_init_accounts() {
@@ -191,17 +187,17 @@ mod tests {
     fn test_get_block_height() {
         let app = TerraTestApp::default();
 
-        assert_eq!(app.get_block_height(), 1i64);
+        assert_eq!(app.get_block_height(), 11543150i64);
 
         app.increase_time(10u64);
 
-        assert_eq!(app.get_block_height(), 2i64);
+        assert_eq!(app.get_block_height(), 11543151i64);
     }
 
     #[test]
     fn test_execute_swap() {
-        use classic_proto::classic::market::MsgSwap;
-        use cosmrs::proto::cosmos::base::v1beta1::Coin;
+        use classic_rust::types::terra::market::v1beta1::MsgSwap;
+        use classic_rust::types::cosmos::base::v1beta1::Coin;
         use crate::module::Bank;
         use crate::module::Market;
 
@@ -435,11 +431,11 @@ mod tests {
     #[test]
     fn test_param_set() {
         use cosmrs::Any;
-        use classic_proto::classic::treasury::*;
+        use classic_rust::types::terra::treasury::v1beta1::*;
 
         let app = TerraTestApp::new();
 
-        let treasury_params = app.get_param_set::<Params>(classic_proto::TREASURY_MODULE, Params::TYPE_URL).unwrap();
+        let treasury_params = app.get_param_set::<Params>(classic_rust::TREASURY_MODULE, Params::TYPE_URL).unwrap();
 
         // sdk.Dec is being handled weirdly, this is due to sdk.Dec being handled by amino in sdk instead of proto in rust.
         // 0000000000000000000 (19 zeros) () (0.000000000000000000 in sdk.Dec)
@@ -457,14 +453,14 @@ mod tests {
             min_initial_deposit_ratio: treasury_params.min_initial_deposit_ratio,
         };
         app.set_param_set(
-            classic_proto::TREASURY_MODULE,
+            classic_rust::TREASURY_MODULE,
             Any {
                 type_url: Params::TYPE_URL.to_string(),
                 value: in_pset.encode_to_vec(),
             },
         ).unwrap();
 
-        let out_pset = app.get_param_set::<Params>(classic_proto::TREASURY_MODULE, Params::TYPE_URL).unwrap();
+        let out_pset = app.get_param_set::<Params>(classic_rust::TREASURY_MODULE, Params::TYPE_URL).unwrap();
         assert_eq!(out_pset.burn_tax_split, String::from("50000000000000000"));
     }
 }

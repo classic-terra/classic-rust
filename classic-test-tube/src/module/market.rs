@@ -1,5 +1,4 @@
-use classic_proto::classic::market::*;
-use classic_proto::traits::TypeUrl;
+use classic_rust::types::terra::market::v1beta1::*;
 use test_tube::{fn_execute, fn_query};
 
 use test_tube::module::Module;

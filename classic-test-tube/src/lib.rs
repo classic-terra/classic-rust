@@ -4,7 +4,7 @@ mod runner;
 mod module;
 
 pub use cosmrs;
-pub use classic_proto;
+pub use classic_rust;
 
 pub use module::*;
 pub use runner::app::TerraTestApp;

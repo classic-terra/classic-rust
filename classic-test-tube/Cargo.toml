@@ -14,7 +14,7 @@ exclude = [
 [dependencies]
 base64 = "0.13.0"
 cosmrs = {version = "0.9.0", features = ["cosmwasm"]}
-classic-proto = {version = "0.1.0", path = "../proto"}
+classic-rust = {version = "0.1.0", path = "../proto"}
 cosmwasm-std = "1.1.2"
 prost = "0.11.0"
 serde = "1.0.144"

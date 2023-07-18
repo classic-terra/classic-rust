@@ -1,5 +1,5 @@
-use classic_proto::classic::oracle::*;
-use test_tube::{fn_query};
+use classic_rust::types::terra::oracle::v1beta1::*;
+use test_tube::fn_query;
 
 use test_tube::module::Module;
 use test_tube::runner::Runner;
