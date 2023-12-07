@@ -6,8 +6,8 @@ mod tests {
     use crate::{Bank, Wasm};
 
     use super::app::TerraTestApp;
-    use cosmrs::proto::cosmos::bank::v1beta1::{MsgSendResponse, QueryBalanceRequest};
-    use cosmrs::proto::cosmwasm::wasm::v1::{
+    use classic_rust::types::cosmos::bank::v1beta1::{MsgSendResponse, QueryBalanceRequest};
+    use classic_rust::types::cosmwasm::wasm::v1::{
         MsgExecuteContractResponse, MsgInstantiateContractResponse,
     };
     use cosmwasm_std::{to_binary, BankMsg, Coin, CosmosMsg, Empty, Event, WasmMsg};

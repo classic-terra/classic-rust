@@ -144,7 +144,7 @@ mod tests {
     use prost::Message;
     use std::option::Option::None;
 
-    use cosmrs::proto::cosmos::bank::v1beta1::QueryAllBalancesRequest;
+    use classic_rust::types::cosmos::bank::v1beta1::QueryAllBalancesRequest;
     use cosmwasm_std::{coins, Coin};
 
     use crate::module::Wasm;

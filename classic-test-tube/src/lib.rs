@@ -3,7 +3,6 @@
 mod runner;
 mod module;
 
-pub use cosmrs;
 pub use classic_rust;
 
 pub use module::*;

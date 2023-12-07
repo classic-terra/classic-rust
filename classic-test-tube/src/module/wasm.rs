@@ -1,10 +1,10 @@
-use cosmrs::proto::cosmwasm::wasm::v1::{
+use classic_rust::types::cosmwasm::wasm::v1::{
     AccessConfig, MsgExecuteContract, MsgExecuteContractResponse, MsgInstantiateContract,
     MsgInstantiateContractResponse, MsgStoreCode, MsgStoreCodeResponse,
     QuerySmartContractStateRequest, QuerySmartContractStateResponse,
     MsgMigrateContract, MsgMigrateContractResponse,
 };
-use cosmrs::proto::traits::TypeUrl;
+use classic_rust::types::cosmos::base::v1beta1::Coin as ClassicCoin;
 use cosmwasm_std::Coin;
 use serde::{de::DeserializeOwned, Serialize};
 
@@ -67,7 +67,7 @@ where
                 msg: serde_json::to_vec(msg).map_err(EncodeError::JsonEncodeError)?,
                 funds: funds
                     .iter()
-                    .map(|c| cosmrs::proto::cosmos::base::v1beta1::Coin {
+                    .map(|c| ClassicCoin {
                         denom: c.denom.parse().unwrap(),
                         amount: format!("{}", c.amount.u128()),
                     })
@@ -94,7 +94,7 @@ where
                 msg: serde_json::to_vec(msg).map_err(EncodeError::JsonEncodeError)?,
                 funds: funds
                     .iter()
-                    .map(|c| cosmrs::proto::cosmos::base::v1beta1::Coin {
+                    .map(|c| ClassicCoin {
                         denom: c.denom.parse().unwrap(),
                         amount: format!("{}", c.amount.u128()),
                     })
