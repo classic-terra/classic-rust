@@ -23,8 +23,8 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktest "github.com/cosmos/cosmos-sdk/x/bank/testutil"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	// wasmd
@@ -36,6 +36,7 @@ import (
 
 	// terra
 	coretypes "github.com/classic-terra/core/v2/types"
+	fork "github.com/classic-terra/core/v2/types/fork"
 )
 
 var (
@@ -67,7 +68,7 @@ func InitTestEnv() uint64 {
 	// Allow testing unoptimized contract
 	wasmtypes.MaxWasmSize = 1024 * 1024 * 1024 * 1024 * 1024
 
-	env.Ctx = env.App.BaseApp.NewContext(false, tmproto.Header{Height: coretypes.VersionMapEnableHeight - 1, ChainID: "columbus-5", Time: time.Now().UTC()})
+	env.Ctx = env.App.BaseApp.NewContext(false, tmproto.Header{Height: fork.VersionMapEnableHeight - 1, ChainID: "columbus-5", Time: time.Now().UTC()})
 
 	env.BeginNewBlock(false, 5)
 
@@ -112,7 +113,7 @@ func InitAccount(envId uint64, coinsJson string) *C.char {
 
 	}
 
-	err := simapp.FundAccount(env.App.BankKeeper, env.Ctx, accAddr, coins)
+	err := banktest.FundAccount(env.App.BankKeeper, env.Ctx, accAddr, coins)
 	if err != nil {
 		panic(errors.Wrapf(err, "Failed to fund account"))
 	}

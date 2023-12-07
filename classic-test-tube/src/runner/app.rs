@@ -3,6 +3,7 @@ use cosmrs::Any;
 use cosmwasm_std::Coin;
 
 use prost::Message;
+use serde::de::DeserializeOwned;
 use test_tube::account::SigningAccount;
 
 use test_tube::runner::result::{RunnerExecuteResult, RunnerResult};
@@ -121,7 +122,7 @@ impl<'a> Runner<'a> for TerraTestApp {
     fn query<Q, R>(&self, path: &str, q: &Q) -> RunnerResult<R>
     where
         Q: ::prost::Message,
-        R: ::prost::Message + Default,
+        R: ::prost::Message + Default + DeserializeOwned,
     {
         self.inner.query(path, q)
     }
@@ -135,6 +136,43 @@ impl<'a> Runner<'a> for TerraTestApp {
         R: prost::Message + Default,
     {
         self.inner.execute_multiple_raw(msgs, signer)
+    }
+
+    fn execute<M, R>(
+        &self,
+        msg: M,
+        type_url: &str,
+        signer: &SigningAccount,
+    ) -> RunnerExecuteResult<R>
+    where
+        M: prost::Message,
+        R: prost::Message + Default,
+    {
+        self.execute_multiple(&[(msg, type_url)], signer)
+    }
+
+    fn execute_cosmos_msgs<S>(
+        &self,
+        msgs: &[cosmwasm_std::CosmosMsg],
+        signer: &SigningAccount,
+    ) -> RunnerExecuteResult<S>
+    where
+        S: prost::Message + Default,
+    {
+        let msgs = msgs
+            .iter()
+            .map(|msg| match msg {
+                cosmwasm_std::CosmosMsg::Bank(msg) => test_tube::utils::bank_msg_to_any(msg, signer),
+                cosmwasm_std::CosmosMsg::Stargate { type_url, value } => Ok(cosmrs::Any {
+                    type_url: type_url.clone(),
+                    value: value.0.clone(),
+                }),
+                cosmwasm_std::CosmosMsg::Wasm(msg) => test_tube::utils::wasm_msg_to_any(msg, signer),
+                _ => todo!("unsupported cosmos msg variant"),
+            })
+            .collect::<Result<Vec<_>, test_tube::RunnerError>>()?;
+
+        self.execute_multiple_raw(msgs, signer)
     }
 }
 
@@ -289,7 +327,7 @@ mod tests {
 
     #[test]
     fn test_query_print_all_module_addresses() {
-        use cosmrs::proto::cosmos::auth::v1beta1::{QueryAccountsRequest, QueryAccountsResponse, ModuleAccount};
+        use classic_rust::types::cosmos::auth::v1beta1::{QueryAccountsRequest, QueryAccountsResponse, ModuleAccount};
 
         let app = TerraTestApp::default();
 

@@ -20,8 +20,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
+	banktest "github.com/cosmos/cosmos-sdk/x/bank/testutil"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	// wasmd
@@ -30,6 +31,7 @@ import (
 	// classic
 	"github.com/classic-terra/core/v2/app"
 	coretypes "github.com/classic-terra/core/v2/types"
+	fork "github.com/classic-terra/core/v2/types/fork"
 	markettypes "github.com/classic-terra/core/v2/x/market/types"
 	oracletypes "github.com/classic-terra/core/v2/x/oracle/types"
 	treasurytypes "github.com/classic-terra/core/v2/x/treasury/types"
@@ -141,7 +143,7 @@ func SetupTerraApp() *app.TerraApp {
 	appInstance.InitChain(
 		abci.RequestInitChain{
 			Validators:      []abci.ValidatorUpdate{},
-			InitialHeight:   coretypes.VersionMapEnableHeight,
+			InitialHeight:   fork.VersionMapEnableHeight,
 			ConsensusParams: concensusParams,
 			AppStateBytes:   stateBytes,
 		},
@@ -165,7 +167,7 @@ func (env *TestEnv) BeginNewBlock(executeNextEpoch bool, timeIncreaseSeconds uin
 		valAddr = valAddr2.Bytes()
 
 		env.ValPrivs = append(env.ValPrivs, valPriv)
-		err := simapp.FundAccount(env.App.BankKeeper, env.Ctx, valAddrFancy.Bytes(), sdk.NewCoins(sdk.NewInt64Coin("uluna", 9223372036854775807)))
+		err := banktest.FundAccount(env.App.BankKeeper, env.Ctx, valAddrFancy.Bytes(), sdk.NewCoins(sdk.NewInt64Coin("uluna", 9223372036854775807)))
 		if err != nil {
 			panic(errors.Wrapf(err, "Failed to fund account"))
 		}
@@ -221,15 +223,15 @@ func (env *TestEnv) setupValidator(bondStatus stakingtypes.BondStatus) (*secp256
 	bondDenom := env.App.StakingKeeper.GetParams(env.Ctx).BondDenom
 	selfBond := sdk.NewCoins(sdk.Coin{Amount: sdk.NewInt(100), Denom: bondDenom})
 
-	err := simapp.FundAccount(env.App.BankKeeper, env.Ctx, sdk.AccAddress(valPub.Address()), selfBond)
+	err := banktest.FundAccount(env.App.BankKeeper, env.Ctx, sdk.AccAddress(valPub.Address()), selfBond)
 	requireNoErr(err)
 
-	stakingHandler := staking.NewHandler(env.App.StakingKeeper)
+	stakingMsgServer := stakingkeeper.NewMsgServerImpl(env.App.StakingKeeper)
 	stakingCoin := sdk.NewCoin(bondDenom, selfBond[0].Amount)
 	ZeroCommission := stakingtypes.NewCommissionRates(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec())
 	msg, err := stakingtypes.NewMsgCreateValidator(valAddr, valPub, stakingCoin, stakingtypes.Description{}, ZeroCommission, sdk.OneInt())
 	requireNoErr(err)
-	res, err := stakingHandler(env.Ctx, msg)
+	res, err := stakingMsgServer.CreateValidator(sdk.WrapSDKContext(env.Ctx), msg)
 	requireNoErr(err)
 	requireNoNil("staking handler", res)
 

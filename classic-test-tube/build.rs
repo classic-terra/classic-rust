@@ -103,6 +103,8 @@ fn build_libclassictesttube(out: PathBuf) {
         .current_dir(manifest_dir.join("libclassictesttube"))
         .arg("build")
         .arg("-buildmode=c-shared")
+        .arg("-ldflags")
+        .arg("-w")
         .arg("-o")
         .arg(out)
         .arg("main.go")
