@@ -23,12 +23,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "android-tzdata"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e999941b234f3131b00bc13c22d06e8c5ff726d1b6318ac7eb276997bbb4fef0"
-
-[[package]]
 name = "anyhow"
 version = "1.0.71"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -286,11 +280,10 @@ checksum = "baf1de4339761588bc0619e3cbc0120ee582ebb74b53b4efbf79117bd2da40fd"
 
 [[package]]
 name = "chrono"
-version = "0.4.26"
+version = "0.4.31"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec837a71355b28f6556dbd569b37b3f363091c0bd4b2e735674521b4c5fd9bc5"
+checksum = "7f2c685bad3eb3d45a01354cedb7d5faa66194d1d58ba6e267a8de788f79db38"
 dependencies = [
- "android-tzdata",
  "num-traits",
 ]
 
@@ -368,7 +361,7 @@ dependencies = [
 name = "classic-test-tube"
 version = "0.1.1"
 dependencies = [
- "base64 0.13.1",
+ "base64 0.21.5",
  "bindgen",
  "classic-rust",
  "cosmrs",
@@ -2558,9 +2551,9 @@ dependencies = [
 
 [[package]]
 name = "test-tube"
-version = "0.1.7"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "04de0d85f2438f0b64a5c135a1524564f2b89263cfbce011542446b6681d006f"
+checksum = "65e79c7af10967dd3383ee5aae3810637cc3f2fd040f87f862c02151db060628"
 dependencies = [
  "base64 0.13.1",
  "cosmrs",

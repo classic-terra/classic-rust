@@ -11,16 +11,22 @@ import (
 	// tendermint
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
-	tmtypes "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
 	dbm "github.com/tendermint/tm-db"
 
 	// cosmos-sdk
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktest "github.com/cosmos/cosmos-sdk/x/bank/testutil"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -30,6 +36,8 @@ import (
 
 	// classic
 	"github.com/classic-terra/core/v2/app"
+	appparams "github.com/classic-terra/core/v2/app/params"
+	apptesting "github.com/classic-terra/core/v2/app/testing"
 	coretypes "github.com/classic-terra/core/v2/types"
 	fork "github.com/classic-terra/core/v2/types/fork"
 	markettypes "github.com/classic-terra/core/v2/x/market/types"
@@ -42,6 +50,7 @@ type TestEnv struct {
 	Ctx                sdk.Context
 	ParamTypesRegistry ParamTypeRegistry
 	ValPrivs           []*secp256k1.PrivKey
+	NodeHome           string
 }
 
 // DebugAppOptions is a stub implementing AppOptions
@@ -55,7 +64,7 @@ func (ao DebugAppOptions) Get(o string) interface{} {
 	return nil
 }
 
-func SetupTerraApp() *app.TerraApp {
+func SetupTerraApp(nodeHome string) *app.TerraApp {
 	db := dbm.NewMemDB()
 	var emptyWasmOpts []wasm.Option
 	encCfg := app.MakeEncodingConfig()
@@ -66,7 +75,7 @@ func SetupTerraApp() *app.TerraApp {
 		nil,
 		true,
 		map[int64]bool{},
-		app.DefaultNodeHome,
+		nodeHome,
 		5,
 		encCfg,
 		DebugAppOptions{},
@@ -75,6 +84,22 @@ func SetupTerraApp() *app.TerraApp {
 
 	// Genesis setup
 	genesisState := app.NewDefaultGenesisState()
+
+	// setup validator genesis
+	senderPrivKey := secp256k1.GenPrivKey()
+	acc := authtypes.NewBaseAccount(senderPrivKey.PubKey().Address().Bytes(), senderPrivKey.PubKey(), 0, 0)
+	balance := banktypes.Balance{
+		Address: acc.GetAddress().String(),
+		Coins:   sdk.NewCoins(sdk.NewCoin(appparams.BondDenom, sdk.NewInt(100000000000000))),
+	}
+
+	// create validator set with single validator
+	privVal := ed25519.GenPrivKey()
+	pubKey, err := cryptocodec.ToTmPubKeyInterface(privVal.PubKey())
+	requireNoErr(err)
+	validator := tmtypes.NewValidator(pubKey, 1)
+	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	genesisState = genesisStateWithValSet(appInstance, genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 
 	// setup oracle genesis to have some exchange prices
 	exchangeRates := []oracletypes.ExchangeRateTuple{
@@ -142,12 +167,22 @@ func SetupTerraApp() *app.TerraApp {
 
 	appInstance.InitChain(
 		abci.RequestInitChain{
+			ChainId:         apptesting.SimAppChainID,
 			Validators:      []abci.ValidatorUpdate{},
 			InitialHeight:   fork.VersionMapEnableHeight,
 			ConsensusParams: concensusParams,
 			AppStateBytes:   stateBytes,
 		},
 	)
+
+	appInstance.Commit()
+	appInstance.BeginBlock(abci.RequestBeginBlock{Header: tmproto.Header{
+		ChainID:            apptesting.SimAppChainID,
+		Height:             appInstance.LastBlockHeight() + 1,
+		AppHash:            appInstance.LastCommitID().Hash,
+		ValidatorsHash:     valSet.Hash(),
+		NextValidatorsHash: valSet.Hash(),
+	}})
 
 	return appInstance
 }
@@ -201,7 +236,7 @@ func (env *TestEnv) beginNewBlockWithProposer(executeNextEpoch bool, proposer sd
 
 	newBlockTime := env.Ctx.BlockTime().Add(time.Duration(timeIncreaseSeconds) * time.Second)
 
-	header := tmtypes.Header{ChainID: "columbus-5", Height: env.Ctx.BlockHeight() + 1, Time: newBlockTime}
+	header := tmproto.Header{ChainID: apptesting.SimAppChainID, Height: env.Ctx.BlockHeight() + 1, Time: newBlockTime}
 	newCtx := env.Ctx.WithBlockTime(newBlockTime).WithBlockHeight(env.Ctx.BlockHeight() + 1)
 	env.Ctx = newCtx
 	lastCommitInfo := abci.LastCommitInfo{
@@ -283,4 +318,115 @@ func requierTrue(name string, b bool) {
 	if !b {
 		panic(fmt.Sprintf("%s must be true", name))
 	}
+}
+
+func genesisStateWithValSet(
+	app *app.TerraApp, genesisState app.GenesisState,
+	valSet *tmtypes.ValidatorSet, genAccs []authtypes.GenesisAccount,
+	balances ...banktypes.Balance,
+) app.GenesisState {
+	// set genesis accounts
+	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
+	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)
+
+	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
+	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
+	validatorSigningInfos := make([]slashingtypes.SigningInfo, 0, len(valSet.Validators))
+	missedBlocks := make([]slashingtypes.ValidatorMissedBlocks, 0, len(valSet.Validators))
+
+	bondAmt := sdk.DefaultPowerReduction
+
+	for _, val := range valSet.Validators {
+		pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		requireNoErr(err)
+		pkAny, err := codectypes.NewAnyWithValue(pk)
+		requireNoErr(err)
+		validator := stakingtypes.Validator{
+			OperatorAddress:   sdk.ValAddress(val.Address).String(),
+			ConsensusPubkey:   pkAny,
+			Jailed:            false,
+			Status:            stakingtypes.Bonded,
+			Tokens:            bondAmt,
+			DelegatorShares:   sdk.OneDec(),
+			Description:       stakingtypes.Description{},
+			UnbondingHeight:   int64(0),
+			UnbondingTime:     time.Unix(0, 0).UTC(),
+			Commission:        stakingtypes.NewCommission(sdk.ZeroDec(), sdk.ZeroDec(), sdk.ZeroDec()),
+			MinSelfDelegation: sdk.ZeroInt(),
+		}
+
+		slashingInfo := slashingtypes.SigningInfo{
+			Address: sdk.GetConsAddress(pk).String(),
+			ValidatorSigningInfo: slashingtypes.ValidatorSigningInfo{
+				Address:             sdk.GetConsAddress(pk).String(),
+				StartHeight:         fork.VersionMapEnableHeight,
+				IndexOffset:         0,
+				JailedUntil:         time.Unix(0, 0),
+				Tombstoned:          false,
+				MissedBlocksCounter: 0,
+			},
+		}
+
+		validatorMissedBlock := slashingtypes.ValidatorMissedBlocks{
+			Address:      sdk.GetConsAddress(pk).String(),
+			MissedBlocks: []slashingtypes.MissedBlock{},
+		}
+
+		validators = append(validators, validator)
+		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
+		validatorSigningInfos = append(validatorSigningInfos, slashingInfo)
+		missedBlocks = append(missedBlocks, validatorMissedBlock)
+	}
+	// set validators and delegations
+	defaultStParams := stakingtypes.DefaultParams()
+	stParams := stakingtypes.NewParams(
+		defaultStParams.UnbondingTime,
+		defaultStParams.MaxValidators,
+		defaultStParams.MaxEntries,
+		defaultStParams.HistoricalEntries,
+		appparams.BondDenom,
+		defaultStParams.MinCommissionRate,
+	)
+
+	// set validators and delegations
+	stakingGenesis := stakingtypes.NewGenesisState(stParams, validators, delegations)
+	genesisState[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
+
+	totalSupply := sdk.NewCoins()
+	for _, b := range balances {
+		// add genesis acc tokens to total supply
+		totalSupply = totalSupply.Add(b.Coins...)
+	}
+
+	for range delegations {
+		// add delegated tokens to total supply
+		totalSupply = totalSupply.Add(sdk.NewCoin(appparams.BondDenom, bondAmt))
+	}
+
+	// add bonded amount to bonded pool module account
+	balances = append(balances, banktypes.Balance{
+		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
+		Coins:   sdk.Coins{sdk.NewCoin(appparams.BondDenom, bondAmt)},
+	})
+
+	// update total supply
+	bankGenesis := banktypes.NewGenesisState(
+		banktypes.DefaultGenesisState().Params,
+		balances,
+		totalSupply,
+		[]banktypes.Metadata{},
+	)
+
+	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
+
+	// set slashing info of validator
+	slashingGenesis := slashingtypes.NewGenesisState(
+		slashingtypes.DefaultParams(),
+		validatorSigningInfos,
+		missedBlocks,
+	)
+
+	genesisState[slashingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(slashingGenesis)
+
+	return genesisState
 }

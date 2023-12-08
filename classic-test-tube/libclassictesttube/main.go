@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sync"
 	"time"
 
@@ -35,8 +36,9 @@ import (
 	"github.com/classic-terra/test-tube/classic-test-tube/testenv"
 
 	// terra
+
+	apptesting "github.com/classic-terra/core/v2/app/testing"
 	coretypes "github.com/classic-terra/core/v2/types"
-	fork "github.com/classic-terra/core/v2/types/fork"
 )
 
 var (
@@ -60,7 +62,12 @@ func InitTestEnv() uint64 {
 	sdkConfig.SetAddressVerifier(wasmtypes.VerifyAddressLen())
 
 	env := new(testenv.TestEnv)
-	env.App = testenv.SetupTerraApp()
+	nodeHome, err := os.MkdirTemp("", "mytestnet")
+	if err != nil {
+		panic(err)
+	}
+	env.App = testenv.SetupTerraApp(nodeHome)
+	env.NodeHome = nodeHome
 	env.ParamTypesRegistry = *testenv.NewParamTypeRegistry()
 
 	env.SetupParamTypes()
@@ -68,7 +75,7 @@ func InitTestEnv() uint64 {
 	// Allow testing unoptimized contract
 	wasmtypes.MaxWasmSize = 1024 * 1024 * 1024 * 1024 * 1024
 
-	env.Ctx = env.App.BaseApp.NewContext(false, tmproto.Header{Height: fork.VersionMapEnableHeight - 1, ChainID: "columbus-5", Time: time.Now().UTC()})
+	env.Ctx = env.App.BaseApp.NewContext(false, tmproto.Header{Height: env.App.LastBlockHeight(), ChainID: apptesting.SimAppChainID, Time: time.Now().UTC()})
 
 	env.BeginNewBlock(false, 5)
 
@@ -82,6 +89,16 @@ func InitTestEnv() uint64 {
 	envRegister.Store(id, *env)
 
 	return id
+}
+
+//export CleanUp
+func CleanUp(envId uint64) {
+	env := loadEnv(envId)
+	err := os.RemoveAll(env.NodeHome)
+	if err != nil {
+		panic(err)
+	}
+	envRegister.Delete(envId)
 }
 
 //export InitAccount

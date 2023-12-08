@@ -11,13 +11,13 @@ use classic_rust_generator::{
 };
 
 /// The Cosmos SDK commit or tag to be cloned and used to build the proto files
-const COSMOS_SDK_REV: &str = "v0.45.14-classic";
+const COSMOS_SDK_REV: &str = "v0.46.14-terra.4";
 
 /// The classic commit or tag to be cloned and used to build the proto files
-const CLASSIC_REV: &str = "v2.1.1";
+const CLASSIC_REV: &str = "v2.3.2";
 
 /// The wasmd commit or tag to be cloned and used to build the proto files
-const WASMD_REV: &str = "v0.30.0-terra.2";
+const WASMD_REV: &str = "v0.30.0-terra.3";
 
 // All paths must end with a / and either be absolute or include a ./ to reference the current
 // working directory.

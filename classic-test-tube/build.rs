@@ -33,6 +33,7 @@ fn main() {
     };
 
     let lib_filename = lib_filename.as_str();
+    println!("lib file name = {}", lib_filename);
 
     if env::var("PREBUILD_LIB") == Ok("1".to_string()) {
         build_libclassictesttube(prebuilt_lib_dir.join(lib_filename));
