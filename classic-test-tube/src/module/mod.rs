@@ -4,7 +4,7 @@ mod market;
 mod oracle;
 mod treasury;
 
-pub use test_tube::module::Module;
+pub use classic_core_test_tube::module::Module;
 
 pub use wasm::Wasm;
 pub use bank::Bank;

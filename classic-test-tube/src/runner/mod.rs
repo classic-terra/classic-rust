@@ -12,11 +12,11 @@ mod tests {
     };
     use cosmwasm_std::{to_json_binary, BankMsg, Coin, CosmosMsg, Empty, Event, WasmMsg};
 
-    use test_tube::account::Account;
-    use test_tube::runner::error::RunnerError::{ExecuteError, QueryError};
-    use test_tube::runner::result::RawResult;
-    use test_tube::runner::Runner;
-    use test_tube::{Module, RunnerExecuteResult};
+    use classic_core_test_tube::account::Account;
+    use classic_core_test_tube::runner::error::RunnerError::{ExecuteError, QueryError};
+    use classic_core_test_tube::runner::result::RawResult;
+    use classic_core_test_tube::runner::Runner;
+    use classic_core_test_tube::{Module, RunnerExecuteResult};
 
     #[derive(::prost::Message)]
     struct AdhocRandomQueryRequest {

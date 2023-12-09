@@ -8,9 +8,9 @@ use classic_rust::types::cosmos::base::v1beta1::Coin as ClassicCoin;
 use cosmwasm_std::Coin;
 use serde::{de::DeserializeOwned, Serialize};
 
-use test_tube::runner::error::{DecodeError, EncodeError, RunnerError};
-use test_tube::runner::result::{RunnerExecuteResult, RunnerResult};
-use test_tube::{
+use classic_core_test_tube::runner::error::{DecodeError, EncodeError, RunnerError};
+use classic_core_test_tube::runner::result::{RunnerExecuteResult, RunnerResult};
+use classic_core_test_tube::{
     account::{Account, SigningAccount},
     runner::Runner,
 };

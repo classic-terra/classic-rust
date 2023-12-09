@@ -1,8 +1,8 @@
 use classic_rust::types::terra::oracle::v1beta1::*;
-use test_tube::fn_query;
+use classic_core_test_tube::fn_query;
 
-use test_tube::module::Module;
-use test_tube::runner::Runner;
+use classic_core_test_tube::module::Module;
+use classic_core_test_tube::runner::Runner;
 
 pub struct Oracle<'a, R: Runner<'a>> {
     runner: &'a R,

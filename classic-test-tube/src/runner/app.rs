@@ -4,11 +4,11 @@ use cosmwasm_std::Coin;
 
 use prost::Message;
 use serde::de::DeserializeOwned;
-use test_tube::account::SigningAccount;
+use classic_core_test_tube::account::SigningAccount;
 
-use test_tube::runner::result::{RunnerExecuteResult, RunnerResult};
-use test_tube::runner::Runner;
-use test_tube::BaseApp;
+use classic_core_test_tube::runner::result::{RunnerExecuteResult, RunnerResult};
+use classic_core_test_tube::runner::Runner;
+use classic_core_test_tube::BaseApp;
 
 const FEE_DENOM: &str = "uluna";
 const TERRA_ADDRESS_PREFIX: &str = "terra";
@@ -152,9 +152,9 @@ mod tests {
     use crate::module::Wasm;
     use crate::runner::app::TerraTestApp;
     use crate::{Bank, Treasury};
-    use test_tube::account::{Account, FeeSetting};
-    use test_tube::module::Module;
-    use test_tube::runner::*;
+    use classic_core_test_tube::account::{Account, FeeSetting};
+    use classic_core_test_tube::module::Module;
+    use classic_core_test_tube::runner::*;
 
     #[test]
     fn test_init_accounts() {
