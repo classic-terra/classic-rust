@@ -4,7 +4,7 @@ edition = "2021"
 license = "MIT OR Apache-2.0"
 name = "classic-test-tube"
 repository = "https://github.com/classic-terra/classic-rust"
-version = "0.1.1"
+version = "0.2.0"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 exclude = [
@@ -14,12 +14,12 @@ exclude = [
 [dependencies]
 base64 = "0.21.5"
 cosmrs = {version = "0.9.0", features = ["cosmwasm"]}
-classic-rust = {version = "0.1.0", path = "../proto"}
+classic-rust = {version = "0.2.0", path = "../proto"}
 cosmwasm-std = "1.1.2"
 prost = "0.11.0"
 serde = "1.0.144"
 serde_json = "1.0.85"
-test-tube = "0.2.0"
+test-tube = {version = "0.2.0", path = "../packages/test-tube"}
 thiserror = "1.0.34"
 
 [build-dependencies]
