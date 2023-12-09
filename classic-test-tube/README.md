@@ -7,7 +7,7 @@ To generate C header for use by test-tube `go tool cgo -exportheader artifacts/l
 
 check `go version` that it supports darwin/arm64
 
-```
+```shell
 cargo clean
 cargo build
 ```

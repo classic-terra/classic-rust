@@ -137,43 +137,6 @@ impl<'a> Runner<'a> for TerraTestApp {
     {
         self.inner.execute_multiple_raw(msgs, signer)
     }
-
-    fn execute<M, R>(
-        &self,
-        msg: M,
-        type_url: &str,
-        signer: &SigningAccount,
-    ) -> RunnerExecuteResult<R>
-    where
-        M: prost::Message,
-        R: prost::Message + Default,
-    {
-        self.execute_multiple(&[(msg, type_url)], signer)
-    }
-
-    fn execute_cosmos_msgs<S>(
-        &self,
-        msgs: &[cosmwasm_std::CosmosMsg],
-        signer: &SigningAccount,
-    ) -> RunnerExecuteResult<S>
-    where
-        S: prost::Message + Default,
-    {
-        let msgs = msgs
-            .iter()
-            .map(|msg| match msg {
-                cosmwasm_std::CosmosMsg::Bank(msg) => test_tube::utils::bank_msg_to_any(msg, signer),
-                cosmwasm_std::CosmosMsg::Stargate { type_url, value } => Ok(cosmrs::Any {
-                    type_url: type_url.clone(),
-                    value: value.0.clone(),
-                }),
-                cosmwasm_std::CosmosMsg::Wasm(msg) => test_tube::utils::wasm_msg_to_any(msg, signer),
-                _ => todo!("unsupported cosmos msg variant"),
-            })
-            .collect::<Result<Vec<_>, test_tube::RunnerError>>()?;
-
-        self.execute_multiple_raw(msgs, signer)
-    }
 }
 
 #[cfg(test)]
@@ -438,16 +401,8 @@ mod tests {
         // use FeeSetting::Auto by default, so should not equal newly custom fee setting
         let wasm = Wasm::new(&app);
         let wasm_byte_code = std::fs::read("./test_artifacts/cw1_whitelist.wasm").unwrap();
-        let temp_res = wasm.store_code(&wasm_byte_code, None, &alice);
-        match temp_res {
-            Ok(res) => {
-                assert_ne!(res.gas_info.gas_wanted, gas_limit);
-            }
-            Err(err) => {
-                println!("error = {}", err.to_string());
-                io::stdout().flush().unwrap();
-            }
-        }
+        let res = wasm.store_code(&wasm_byte_code, None, &alice).unwrap();
+        assert_ne!(res.gas_info.gas_wanted, gas_limit);
 
         //update fee setting
         let bob = bob.with_fee_setting(FeeSetting::Custom {
