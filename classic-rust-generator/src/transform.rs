@@ -1,13 +1,12 @@
 use heck::ToUpperCamelCase;
 use log::debug;
 use prost_types::FileDescriptorSet;
-use quote::ToTokens;
 use regex::Regex;
 use std::ffi::OsStr;
 use std::fs::{create_dir_all, remove_dir_all};
 use std::path::{Path, PathBuf};
 use std::{fs, io};
-use syn::{parse_quote, File, Item, ItemMod};
+use syn::{File, Item, ItemMod};
 use walkdir::WalkDir;
 
 use crate::transformers;
