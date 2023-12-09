@@ -9,6 +9,8 @@ Import:
 2. `classic-test-tube = {version = "0.1.0", git = "https://github.com/classic-terra/classic-rust.git", package = "classic-test-tube", rev = "11bc73ebc96d1f5521df6af60e57c1aeed8649f4"}`
 
 # Build proto
+clone submodules: `git submodule update --init --recursive`
+
 run `cargo build && cargo run classic-rust-generator` to generate proto
 
 to update dependencies, go to: [main](src/main.rs)

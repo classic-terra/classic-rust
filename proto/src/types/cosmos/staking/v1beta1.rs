@@ -132,6 +132,8 @@ pub struct Validator {
     #[prost(message, optional, tag = "10")]
     pub commission: ::core::option::Option<Commission>,
     /// min_self_delegation is the validator's self declared minimum self delegation.
+    ///
+    /// Since: cosmos-sdk 0.46
     #[prost(string, tag = "11")]
     pub min_self_delegation: ::prost::alloc::string::String,
 }
@@ -782,3 +784,46 @@ pub struct MsgUndelegateResponse {
     #[prost(message, optional, tag = "1")]
     pub completion_time: ::core::option::Option<crate::shim::Timestamp>,
 }
+/// MsgCancelUnbondingDelegation defines the SDK message for performing a cancel unbonding delegation for delegator
+///
+/// Since: cosmos-sdk 0.46
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    ::prost::Message,
+    ::serde::Serialize,
+    ::serde::Deserialize,
+    ::schemars::JsonSchema,
+    CosmwasmExt,
+)]
+#[proto_message(type_url = "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegation")]
+pub struct MsgCancelUnbondingDelegation {
+    #[prost(string, tag = "1")]
+    pub delegator_address: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub validator_address: ::prost::alloc::string::String,
+    /// amount is always less than or equal to unbonding delegation entry balance
+    #[prost(message, optional, tag = "3")]
+    pub amount: ::core::option::Option<super::super::base::v1beta1::Coin>,
+    /// creation_height is the height which the unbonding took place.
+    #[prost(int64, tag = "4")]
+    pub creation_height: i64,
+}
+/// MsgCancelUnbondingDelegationResponse
+///
+/// Since: cosmos-sdk 0.46
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    ::prost::Message,
+    ::serde::Serialize,
+    ::serde::Deserialize,
+    ::schemars::JsonSchema,
+    CosmwasmExt,
+)]
+#[proto_message(type_url = "/cosmos.staking.v1beta1.MsgCancelUnbondingDelegationResponse")]
+pub struct MsgCancelUnbondingDelegationResponse {}
