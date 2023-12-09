@@ -1,9 +1,26 @@
 use osmosis_std_derive::CosmwasmExt;
-/// NOTE: The following type is not implemented due to current limitations of code generator
-/// which currently has issue with tendermint_proto.
-/// This will be fixed in the upcoming release.
-#[allow(dead_code)]
-struct HistoricalInfo {}
+/// HistoricalInfo contains header and validator information for a given block.
+/// It is stored as part of staking module's state, which persists the `n` most
+/// recent HistoricalInfo
+/// (`n` is set by the staking module's `historical_entries` parameter).
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(
+    Clone,
+    PartialEq,
+    Eq,
+    ::prost::Message,
+    ::serde::Serialize,
+    ::serde::Deserialize,
+    ::schemars::JsonSchema,
+    CosmwasmExt,
+)]
+#[proto_message(type_url = "/cosmos.staking.v1beta1.HistoricalInfo")]
+pub struct HistoricalInfo {
+    #[prost(message, optional, tag = "1")]
+    pub header: ::core::option::Option<super::super::super::tendermint::types::Header>,
+    #[prost(message, repeated, tag = "2")]
+    pub valset: ::prost::alloc::vec::Vec<Validator>,
+}
 /// CommissionRates defines the initial commission rates to be used for creating
 /// a validator.
 #[allow(clippy::derive_partial_eq_without_eq)]

@@ -3,5 +3,6 @@ resolver = "2"
 members = [
     "classic-rust-generator",
     "proto",
-    "classic-test-tube"
+    "classic-test-tube",
+    "packages/test-tube",
 ]

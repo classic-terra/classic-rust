@@ -1,8 +1,9 @@
 use crate::runner::error::{DecodeError, RunnerError};
-use cosmrs::proto::cosmos::base::abci::v1beta1::{GasInfo, TxMsgData};
+use cosmrs::proto::cosmos::base::abci::v1beta1::GasInfo;
 use cosmrs::proto::tendermint::abci::ResponseDeliverTx;
 use cosmrs::rpc::endpoint::broadcast::tx_commit::Response as TxCommitResponse;
 use cosmwasm_std::{Attribute, Event};
+use classic_rust::types::cosmos::base::abci::v1beta1::TxMsgData;
 use prost::Message;
 use std::ffi::CString;
 use std::str::Utf8Error;
@@ -32,13 +33,13 @@ where
             TxMsgData::decode(res.data.as_slice()).map_err(DecodeError::ProtoDecodeError)?;
 
         let msg_data = &tx_msg_data
-            .data
+            .msg_responses
             // since this tx contains exactly 1 msg
             // when getting none of them, that means error
             .get(0)
             .ok_or(RunnerError::ExecuteError { msg: res.log })?;
 
-        let data = R::decode(msg_data.data.as_slice()).map_err(DecodeError::ProtoDecodeError)?;
+        let data = R::decode(msg_data.value.as_slice()).map_err(DecodeError::ProtoDecodeError)?;
 
         let events = res
             .events
@@ -82,7 +83,7 @@ where
             .map_err(DecodeError::ProtoDecodeError)?;
 
         let msg_data = &tx_msg_data
-            .data
+            .msg_responses
             // since this tx contains exactly 1 msg
             // when getting none of them, that means error
             .get(0)
@@ -90,7 +91,7 @@ where
                 msg: res.log.to_string(),
             })?;
 
-        let data = R::decode(msg_data.data.as_slice()).map_err(DecodeError::ProtoDecodeError)?;
+        let data = R::decode(msg_data.value.as_slice()).map_err(DecodeError::ProtoDecodeError)?;
 
         let events = res
             .events
