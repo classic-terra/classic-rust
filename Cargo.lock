@@ -337,6 +337,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "classic-rust"
+version = "0.2.0"
+source = "git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0#1753a799b43c9b0871c1a91290d9a22d0c7ef494"
+dependencies = [
+ "chrono",
+ "cosmwasm-std",
+ "osmosis-std-derive",
+ "prost 0.11.9",
+ "prost-types 0.11.9",
+ "schemars",
+ "serde",
+ "serde-cw-value",
+]
+
+[[package]]
 name = "classic-rust-generator"
 version = "0.1.0"
 dependencies = [
@@ -363,7 +378,7 @@ version = "0.2.0"
 dependencies = [
  "base64 0.21.5",
  "bindgen",
- "classic-rust",
+ "classic-rust 0.2.0",
  "cosmrs",
  "cosmwasm-std",
  "cw1-whitelist",
@@ -371,7 +386,7 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
- "test-tube",
+ "test-tube 0.2.0 (git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0)",
  "thiserror",
 ]
 
@@ -2550,15 +2565,30 @@ dependencies = [
 
 [[package]]
 name = "test-tube"
-version = "0.3.0"
+version = "0.2.0"
 dependencies = [
  "base64 0.13.1",
- "classic-rust",
+ "classic-rust 0.2.0",
  "cosmrs",
  "cosmwasm-std",
  "cw1-whitelist",
  "prost 0.11.9",
  "rayon",
+ "serde",
+ "serde_json",
+ "thiserror",
+]
+
+[[package]]
+name = "test-tube"
+version = "0.2.0"
+source = "git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0#1753a799b43c9b0871c1a91290d9a22d0c7ef494"
+dependencies = [
+ "base64 0.13.1",
+ "classic-rust 0.2.0 (git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0)",
+ "cosmrs",
+ "cosmwasm-std",
+ "prost 0.11.9",
  "serde",
  "serde_json",
  "thiserror",
