@@ -323,23 +323,24 @@ dependencies = [
 ]
 
 [[package]]
-name = "classic-rust"
-version = "0.2.0"
+name = "classic-core-test-tube"
+version = "0.1.0"
 dependencies = [
- "chrono",
+ "base64 0.13.1",
+ "classic-rust",
+ "cosmrs",
  "cosmwasm-std",
- "osmosis-std-derive",
+ "cw1-whitelist",
  "prost 0.11.9",
- "prost-types 0.11.9",
- "schemars",
+ "rayon",
  "serde",
- "serde-cw-value",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
 name = "classic-rust"
 version = "0.2.0"
-source = "git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0#1753a799b43c9b0871c1a91290d9a22d0c7ef494"
 dependencies = [
  "chrono",
  "cosmwasm-std",
@@ -378,7 +379,8 @@ version = "0.2.0"
 dependencies = [
  "base64 0.21.5",
  "bindgen",
- "classic-rust 0.2.0",
+ "classic-core-test-tube",
+ "classic-rust",
  "cosmrs",
  "cosmwasm-std",
  "cw1-whitelist",
@@ -386,7 +388,6 @@ dependencies = [
  "rayon",
  "serde",
  "serde_json",
- "test-tube 0.2.0 (git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0)",
  "thiserror",
 ]
 
@@ -2561,37 +2562,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "be55cf8942feac5c765c2c993422806843c9a9a45d4d5c407ad6dd2ea95eb9b6"
 dependencies = [
  "winapi-util",
-]
-
-[[package]]
-name = "test-tube"
-version = "0.2.0"
-dependencies = [
- "base64 0.13.1",
- "classic-rust 0.2.0",
- "cosmrs",
- "cosmwasm-std",
- "cw1-whitelist",
- "prost 0.11.9",
- "rayon",
- "serde",
- "serde_json",
- "thiserror",
-]
-
-[[package]]
-name = "test-tube"
-version = "0.2.0"
-source = "git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0#1753a799b43c9b0871c1a91290d9a22d0c7ef494"
-dependencies = [
- "base64 0.13.1",
- "classic-rust 0.2.0 (git+https://github.com/classic-terra/classic-rust.git?tag=v0.2.0)",
- "cosmrs",
- "cosmwasm-std",
- "prost 0.11.9",
- "serde",
- "serde_json",
- "thiserror",
 ]
 
 [[package]]
