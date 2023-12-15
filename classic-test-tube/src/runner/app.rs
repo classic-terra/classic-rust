@@ -406,7 +406,7 @@ mod tests {
 
         //update fee setting
         let bob = bob.with_fee_setting(FeeSetting::Custom {
-            amount: amount.clone(),
+            amounts: vec![amount.clone()],
             gas_limit,
         });
         let res = wasm.store_code(&wasm_byte_code, None, &bob).unwrap();

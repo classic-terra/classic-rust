@@ -2,7 +2,7 @@ use std::ffi::CString;
 
 use cosmrs::crypto::secp256k1::SigningKey;
 use cosmrs::proto::tendermint::abci::{RequestDeliverTx, ResponseDeliverTx};
-use cosmrs::tx::{Fee, SignerInfo};
+use cosmrs::tx::{Fee, SignerInfo, Gas};
 use cosmrs::{tx, Any};
 use cosmwasm_std::{Coin, Timestamp};
 use prost::Message;
@@ -347,13 +347,22 @@ impl<'a> Runner<'a> for BaseApp {
             self.run_block(|| {
                 let fee = match &signer.fee_setting() {
                     FeeSetting::Auto { .. } => self.estimate_fee(msgs.clone(), signer)?,
-                    FeeSetting::Custom { amount, gas_limit } => Fee::from_amount_and_gas(
-                        cosmrs::Coin {
-                            denom: amount.denom.parse().unwrap(),
-                            amount: amount.amount.to_string().parse().unwrap(),
-                        },
-                        *gas_limit,
-                    ),
+                    FeeSetting::Custom { amounts, gas_limit } => {
+                        let cosmrs_amounts = amounts
+                            .into_iter()
+                            .map(|coin| cosmrs::Coin {
+                                denom: coin.denom.parse().expect("Failed to parse denom"),
+                                amount: coin.amount.to_string().parse().expect("Failed to parse amount"),
+                            })
+                            .collect();
+
+                        Fee{
+                            amount: cosmrs_amounts,
+                            gas_limit: Gas::from(*gas_limit),
+                            payer: None,
+                            granter: None
+                        }
+                    }   
                 };
 
                 let tx = self.create_signed_tx(msgs.clone(), signer, fee)?;

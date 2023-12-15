@@ -121,7 +121,7 @@ pub enum FeeSetting {
         gas_adjustment: f64,
     },
     Custom {
-        amount: Coin,
+        amounts: Vec<Coin>,
         gas_limit: u64,
     },
 }
